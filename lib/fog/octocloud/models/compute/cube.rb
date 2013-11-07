@@ -62,7 +62,7 @@ module Fog
           if File.extname(source) == '.vmdk'
             service.local_import_vmdk(name, source, source_md5, attributes)
           else
-            service.local_import_box(name, source, source_md5, attributes[:extra_opts])
+            service.local_import_box(name, source, source_md5, attributes)
           end
         end
 

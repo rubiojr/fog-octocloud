@@ -24,12 +24,10 @@ module Fog
         # @param [Pathname] target destination directory of the box contents
         # @param [Pathname, String] path box source file (can be URL or file)
         # @param [Hash] opts extra options
-        # @option opts [Boolean] :show_progress display progress when importing a remote box
         #
         def import_box(target, path, opts = {})
           if path.to_s =~ /^http/
-            show_progress = opts.is_a?(Hash) ? opts[:show_progress] == true : false
-            downloaded_file = download_file path.to_s, show_progress
+            downloaded_file = download_file path.to_s, opts
             input = Archive::Tar::Minitar::Input.new(downloaded_file)
           else
             # need to coerce path to a string, so open-uri can figure what it is
@@ -56,14 +54,12 @@ module Fog
         # @param [Pathname] target destination directory of the box contents
         # @param [Pathname, String] src OVA source file (can be URL or file)
         # @param [Hash] opts extra options
-        # @option opts [Boolean] :show_progress display progress when importing a remote box
         #
         def import_ova(target, src, opts = {})
           # First, dump the contents in to a tempfile.
           tmpfile = Tempfile.new(['ova-import', '.ova'])
           if src.to_s =~ /^http/
-            show_progress = opts.is_a?(Hash) ? opts[:show_progress] == true : false
-            downloaded = download_file(src, show_progress)
+            downloaded = download_file(src, opts)
             FileUtils.mv downloaded.path, tmpfile.path
           else
             tmpfile.write(open(src).read)
@@ -109,9 +105,11 @@ module Fog
         # progress animation otherwise.
         #
         # @param [String] url file URL
-        # @param [Boolean] show_progress display progress when true
+        # @param [Hash] opts download options
         #
-        def download_file(url, show_progress = false)
+        def download_file(url, opts = {})
+          show_progress = (opts.is_a?(Hash) and opts[:extra_opts].is_a?(Hash)) ? \
+              opts[:extra_opts][:show_progress] == true : false
           if show_progress
             pbar = nil
             begin
